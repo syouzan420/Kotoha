@@ -2,9 +2,9 @@ import Data.Ratio
 import Data.List (isSuffixOf)
 import Kotof
 
-type Function = String
-type Stack = String
-data Math = Math Function Stack Int Int
+type Function = String; type Stack = String
+type Numerator = Int; type Denominator = Int
+data Math = Math Function Stack Numerator Denominator 
 
 main :: IO ()
 main = do
@@ -41,8 +41,7 @@ calculate (Math "" st n d) x
 calculate (Math fs st n d) x
   | (x>='0' && x<='9') || x=='-' = Math fs (st++[x]) n d
   | fs=="*" && (x=='x' || x=='*') = Math "*" "" ((read st)*n) d 
-  | fs=="*" && x=='/' = Math "/" "" ((read st::Int)*n) d 
+  | fs=="*" && x=='/' = Math "/" "" ((read st)*n) d 
   | fs=="/" && (x=='x' || x=='*') = Math "*" "" n ((read st)*d) 
   | fs=="/" && x=='/' = Math "/" "" n ((read st)*d) 
   | otherwise = Math fs st n d
-  
