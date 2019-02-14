@@ -1,6 +1,5 @@
 import Data.Ratio
 import Data.List (isSuffixOf)
-import Kotof
 
 type Function = String; type Stack = String
 type Numerator = Int; type Denominator = Int
@@ -18,9 +17,16 @@ loop = do
     if l=="exit"
       then return () 
       else do
-         let result = show (foldl (\a s -> a+(mathToRatio (foldl calculate (Math "" "" 1 1) s))) 0 ls)
+         let result = show (foldl selection 0 ls)
          putStrLn (display result)
          loop
+
+selection :: Ratio Int -> String -> Ratio Int
+selection a s@(x:xs)
+  | (x>='0' && x<='9')||x=='-'||x=='+' =  a + mathToRatio (foldl calculate (Math "" "" 1 1) s)
+  | s=="succ" = ((numerator a)+1) % (denominator a)
+  | s=="pred" = ((numerator a)-1) % (denominator a)
+  | otherwise = 0 % 1
 
 display :: String -> String
 display st
