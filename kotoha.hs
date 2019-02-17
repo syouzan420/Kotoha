@@ -47,22 +47,19 @@ calculate (Math [] st n d _) x
   | x=='x' || x=='*' || x=='/' || x=='^' = Math [x] "" (read st) d True
   | otherwise = Math [] st n d True
 calculate (Math fl@(f:fs) st n d b) x
-  | (x>='0' && x<='9') || x=='-' = Math [f] (st++[x]) n d b
-  | f=='/' && x=='(' = Math (x:[f]) st n d (not b)
-  | x==')' && length fl==2 && (((f=='x' || f=='*') && b) || (f=='/' && not b))
-            = Math [x] "" ((read st)*n) d (not b) 
-  | x==')' && length fl==2 && (((f=='x' || f=='*') && not b) || (f=='/' && b))
-            = Math [x] "" n ((read st)*d) (not b) 
-  | x==')' && (((f=='x' || f=='*') && b) || (f=='/' && not b))
-            = Math [x] "" ((read st)*n) d b 
-  | x==')' && (((f=='x' || f=='*') && not b) || (f=='/' && b))
-            = Math [x] "" n ((read st)*d) b 
+  | (x>='0' && x<='9') || x=='-' = Math fl (st++[x]) n d b
+  | f=='/' && x=='(' = Math (x:fl) st n d (not b)
+  | x==')' && length fl>1 && (((f=='x' || f=='*') && b) || (f=='/' && not b))
+            = Math (x:tail fs) "" ((read st)*n) d (not b) 
+  | x==')' && length fl>1 && (((f=='x' || f=='*') && not b) || (f=='/' && b))
+            = Math (x:tail fs) "" n ((read st)*d) (not b) 
+  | x==')' && (((f=='x' || f=='*') && b) || (f=='/' && not b)) = Math [x] "" ((read st)*n) d b 
+  | x==')' && (((f=='x' || f=='*') && not b) || (f=='/' && b)) = Math [x] "" n ((read st)*d) b 
   | f==')' && (x=='x' || x=='*' || x=='/' || x=='^') = Math [x] "" n d b 
   | (((f=='x' || f=='*' || f=='(') && b)||(f=='/' && not b)) && (x=='x' || x=='*' || x=='/' || x=='^')
-            = Math [x] "" ((read st)*n) d b 
+            = Math (x:fs) "" ((read st)*n) d b 
   | (((f=='x' || f=='*' || f=='(') && not b)||(f=='/' && b)) && (x=='x' || x=='*' || x=='/' || x=='^')
-            = Math [x] "" n ((read st)*d) b 
-  | f=='^' && b && (x=='x' || x=='*' || x=='/' || x=='^') = Math [x] "" (n^(read st)) d b
-  | f=='^' && not b && (x=='x' || x=='*' || x=='/' || x=='^') = Math [x] "" n (d^(read st)) b
-  | otherwise = Math [f] st n d b
-
+            = Math (x:fs) "" n ((read st)*d) b 
+  | f=='^' && b && (x=='x' || x=='*' || x=='/' || x=='^') = Math (x:fs) "" (n^(read st)) d b
+  | f=='^' && not b && (x=='x' || x=='*' || x=='/' || x=='^') = Math (x:fs) "" n (d^(read st)) b
+  | otherwise = Math fl st n d b
