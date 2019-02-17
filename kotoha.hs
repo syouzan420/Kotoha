@@ -23,7 +23,7 @@ loop = do
 
 selection :: Ratio Int -> String -> Ratio Int
 selection a s@(x:xs)
-  | (x>='0' && x<='9')||x=='-'||x=='+' =  a + mathToRatio (foldl calculate (Math "" "" 1 1 True) s)
+  | (x>='0' && x<='9')||x=='-'||x=='+'||x=='(' =  a + mathToRatio (foldl calculate (Math "" "" 1 1 True) s)
   | s=="succ" = ((numerator a)+1) % (denominator a)
   | s=="pred" = ((numerator a)-1) % (denominator a)
   | otherwise = 0 % 1
@@ -47,15 +47,22 @@ calculate (Math [] st n d _) x
   | x=='x' || x=='*' || x=='/' || x=='^' = Math [x] "" (read st) d True
   | otherwise = Math [] st n d True
 calculate (Math fl@(f:fs) st n d b) x
-  | (x>='0' && x<='9') || x=='-' = Math fl (st++[x]) n d b
-  | f=='/' && x=='(' = Math (x:fs) st n d (not b)
-  | x==')' && (((f=='x' || f=='*') && b) || (f=='/' && not b)) = Math (x:fs) "" ((read st)*n) d (not b) 
-  | x==')' && (((f=='x' || f=='*') && not b) || (f=='/' && b)) = Math (x:fs) "" n ((read st)*d) (not b) 
-  | f==')' && (x=='x' || x=='*' || x=='/' || x=='^') = Math (x:fs) "" n d b 
+  | (x>='0' && x<='9') || x=='-' = Math [f] (st++[x]) n d b
+  | f=='/' && x=='(' = Math (x:[f]) st n d (not b)
+  | x==')' && length fl==2 && (((f=='x' || f=='*') && b) || (f=='/' && not b))
+            = Math [x] "" ((read st)*n) d (not b) 
+  | x==')' && length fl==2 && (((f=='x' || f=='*') && not b) || (f=='/' && b))
+            = Math [x] "" n ((read st)*d) (not b) 
+  | x==')' && (((f=='x' || f=='*') && b) || (f=='/' && not b))
+            = Math [x] "" ((read st)*n) d b 
+  | x==')' && (((f=='x' || f=='*') && not b) || (f=='/' && b))
+            = Math [x] "" n ((read st)*d) b 
+  | f==')' && (x=='x' || x=='*' || x=='/' || x=='^') = Math [x] "" n d b 
   | (((f=='x' || f=='*' || f=='(') && b)||(f=='/' && not b)) && (x=='x' || x=='*' || x=='/' || x=='^')
-            = Math (x:fs) "" ((read st)*n) d b 
+            = Math [x] "" ((read st)*n) d b 
   | (((f=='x' || f=='*' || f=='(') && not b)||(f=='/' && b)) && (x=='x' || x=='*' || x=='/' || x=='^')
-            = Math (x:fs) "" n ((read st)*d) b 
-  | f=='^' && b && (x=='x' || x=='*' || x=='/' || x=='^') = Math (x:fs) "" (n^(read st)) d b
-  | f=='^' && not b && (x=='x' || x=='*' || x=='/' || x=='^') = Math (x:fs) "" n (d^(read st)) b
-  | otherwise = Math fl st n d b
+            = Math [x] "" n ((read st)*d) b 
+  | f=='^' && b && (x=='x' || x=='*' || x=='/' || x=='^') = Math [x] "" (n^(read st)) d b
+  | f=='^' && not b && (x=='x' || x=='*' || x=='/' || x=='^') = Math [x] "" n (d^(read st)) b
+  | otherwise = Math [f] st n d b
+
