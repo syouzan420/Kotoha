@@ -15,6 +15,8 @@ inPar i ls = (foldl ((++).(change 0)) "" (init ls)) ++" "++ (change i (last ls))
 change :: Int -> String -> String
 change i s = case (foldl whatis "NULL" s) of
              "NULL" -> ""
+             "PERIOD" -> if (i==1 || i==2) then (init s)++" .> "
+                                           else init s
              "NUM" -> if (i==1 || i==2) then "(+("++(replace s)++")) .> "
                                         else "(+("++(replace s)++"))"
              "NFUNC" -> if (i==1 || i==2) then "("++[(head (replace s))]++"("++(tail (replace s))++")) .> "
@@ -49,12 +51,14 @@ whatis :: String -> Char -> String
 whatis acc ch
   | (ch>='0' && ch<='9') && acc=="NULL" = "NUM"
   | (ch>='0' && ch<='9') && acc=="NUM" = "NUM"
+  | (ch>='0' && ch<='9') && acc=="PERIOD" = "NUM"
   | (ch=='+' || ch=='*') && acc=="NULL" = "NFUNC"
   | ch=='[' && acc=="NULL" = "LIST_"
   | ch==']' && acc=="LIST_" = "LIST"
   | ch=='-' && acc=="NULL" = "NUM"
   | (ch>='a' && ch<='x') && acc=="NULL" = "FUNC"
-  | (ch=='+' || ch=='*' || ch=='x' || ch=='/' || ch=='.') && acc=="NUM" = "NUM"
+  | (ch=='+' || ch=='*' || ch=='x' || ch=='/') && acc=="NUM" = "NUM"
+  | ch=='.' && acc=="NUM" = "PERIOD"
   | otherwise = acc 
 
 initParam :: String -> String
