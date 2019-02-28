@@ -41,6 +41,7 @@ replace :: String -> String
 replace s = foldr check [] s
               where check ch acc
                       | ch=='x' = '*':acc
+                      | ch=='/' && (head acc)=='%' = '/':(tail acc)
                       | ch=='/' = '%':acc
                       | otherwise = ch:acc
  
