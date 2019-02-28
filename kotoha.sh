@@ -1,10 +1,13 @@
 #!/bin/bash
 
-echo "*** Kotoha Inline Coder *** 2019/2/24 yokoP"
+set -o histexpand
+set -o vi
+history -r "history.txt"
+echo "*** Kotoha Inline Coder *** 2019/3/1 yokoP"
 
 while :
   do
-    read  -p "> " line
+    read -e -p "> " line 
     if [ "${line}" = "exit" -o "${line}" = "q" ]; then
       break
     fi
@@ -13,6 +16,8 @@ while :
       while read rs; do rs="${rs:0:-1}"; rs=${rs// % //};\
       rs=${rs%/1}; rs=${rs///1]/]}; rs=${rs///1,/,}; rs=${rs//,/, };\
       echo ${rs}; done; done
+    echo $line >> "history.txt"
+    history -n "history.txt"
   done
 
   exit 0
