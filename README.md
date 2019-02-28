@@ -138,6 +138,6 @@ Haskellの(take 3)のやうな 數字引數をとる函數を使ふ場合 數字
 シェルスクリプト kotoha.sh を更新して history機能を付加した  
 kotoha.hs や kotof.hs は 削除し 今後は  
 Conv.hs Func.hs などを更新していく方針を決めた  
-Func.hs の display函數も 使ふ見通しがないので 削除した
+Func.hs の display函數も 使ふ見通しがないので 削除した  
 .ghciファイルは隠しファイルといふことで アップロードできなかつたので  
 ghci.txtと名称を變更してアップロードした
