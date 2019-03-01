@@ -7,3 +7,8 @@ infixr 5 .>
 toList :: a -> [b]
 toList _ = []
 
+cons :: a -> [a] -> [a]
+cons x xs = x:xs
+
+index :: Int ->[a] -> a
+index = flip (!!)
