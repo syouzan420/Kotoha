@@ -10,7 +10,7 @@ conv (x:xs) = (inPar 1 (words x))
 
 inPar :: Int -> [String] -> String
 inPar i (x:[]) = change i x
-inPar i ls = (foldl ((++).(change 0)) "" (init ls)) ++" "++ (change i (last ls))
+inPar i ls = (unwords (map (change 0) (init ls))) ++" "++ (change i (last ls))
 
 change :: Int -> String -> String
 change i s = case (foldl whatis "NULL" s) of
@@ -22,8 +22,8 @@ change i s = case (foldl whatis "NULL" s) of
              "NFUNC" -> if (i==1 || i==2) then "("++[(head (replace s))]++"("++(tail (replace s))++")) .> "
                                           else "("++[(head (replace s))]++"("++(tail (replace s))++"))"
              "LIST" -> case i of
-                          0 -> "toList .> (++ "++s++" ) .> tail"
-                          1 -> "toList .> (++ "++s++" ).> tail .> "
+                          0 -> "toList .> (++ "++s++" )"
+                          1 -> "toList .> (++ "++s++" ) .> "
                           2 -> s++" .>"
                           3 -> s 
              "FUNC" -> if (i==1 || i==2) then s++" .> "
@@ -52,11 +52,12 @@ whatis acc ch
   | (ch>='0' && ch<='9') && acc=="NULL" = "NUM"
   | (ch>='0' && ch<='9') && acc=="NUM" = "NUM"
   | (ch>='0' && ch<='9') && acc=="PERIOD" = "NUM"
-  | (ch=='+' || ch=='*') && acc=="NULL" = "NFUNC"
-  | ch=='[' && acc=="NULL" = "LIST_"
-  | ch==']' && acc=="LIST_" = "LIST"
+  | (ch=='+' || ch=='*' || ch=='x') && acc=="NULL" = "NFUNC"
+  | ch=='[' && acc=="NULL" = "LIST"
   | ch=='-' && acc=="NULL" = "NUM"
-  | (ch>='a' && ch<='x') && acc=="NULL" = "FUNC"
+  | ch=='x' && acc=="NFUNC" = "NFUNC"
+  | (ch>='a' && ch<='z') && acc=="NULL" = "FUNC"
+  | (ch>='a' && ch<='Z') && acc=="NFUNC" = "FUNC"
   | (ch=='+' || ch=='*' || ch=='x' || ch=='/') && acc=="NUM" = "NUM"
   | ch=='.' && acc=="NUM" = "PERIOD"
   | otherwise = acc 

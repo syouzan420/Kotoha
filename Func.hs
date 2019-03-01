@@ -4,5 +4,6 @@ infixr 5 .>
 (.>) :: Functor f => f a -> (a -> b) -> f b
 (.>) = flip fmap
 
-toList :: a -> [a]
-toList x = [x]
+toList :: a -> [b]
+toList _ = []
+
