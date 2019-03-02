@@ -80,7 +80,7 @@ repStr s = foldr check [] s
                       | otherwise = ch:acc
 
 joinPar :: String -> Bool -> [String] -> [String]
-joinPar _ _ [] = []
+joinPar "" _ [] = []
 joinPar s False (x:xs)
   | head x == '(' = joinPar (tail x) True xs
   | otherwise = x : (joinPar s False xs)
@@ -92,6 +92,7 @@ joinLst :: String -> Bool -> [String] -> [String]
 joinLst "" _ [] = []
 joinLst s _ [] = [s]
 joinLst s False (x:xs)
+  | head x == '[' && last x == ']' = x : (joinLst "" False xs)
   | head x == '[' = joinLst x True xs
   | otherwise = x : (joinLst s False xs)
 joinLst s True (x:xs)
@@ -101,14 +102,14 @@ joinLst s True (x:xs)
 fillStr :: Bool -> String -> String
 fillStr _ "" = ""
 fillStr False (x:xs)
-  | x=='"' = x:(fillStr True xs)
+  | x=='\"' = x:(fillStr True xs)
   | otherwise = x:(fillStr False xs)
 fillStr True (x:xs)
-  | x=='\\' = if (head xs)=='"' then (head xs):(fillStr True (tail xs))
+  | x=='\\' = if (head xs)=='\"' then (head xs):(fillStr True (tail xs))
                                else x:(fillStr True xs)
   | x==' ' = ':':(fillStr True xs)
   | x==':' = ":\\"++(fillStr True xs)
-  | x=='"' = x:(fillStr False xs)
+  | x=='\"' = x:(fillStr False xs)
   | otherwise = x:(fillStr True xs)
 
 main :: IO ()
