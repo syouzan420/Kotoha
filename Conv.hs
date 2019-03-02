@@ -1,16 +1,19 @@
 import System.Environment (getArgs)
 
 conv :: [String] -> String
-conv (x:[]) = (inPar 0 (words x)) ++ " $ " ++ initParam x
-conv (x:y:[]) = (inPar 1 (words x)) ++ (inPar 3 (words y)) ++ " $ " ++ initParam x
-conv (x:xs) = (inPar 1 (words x))
-              ++ (unwords $ map (inPar 2) (init (map words xs)))
-              ++ (inPar 3 (words (last xs)))
+conv (x:[]) = (inPar 0 $ words x) ++ " $ " ++ initParam x
+conv (x:y:[]) = (inPar 1 $ words x) ++ (inPar 3 $ words y) ++ " $ " ++ initParam x
+conv (x:xs) = (inPar 1 $ words x)
+              ++ (unwords $ map (inPar 2) $ init (map words xs))
+              ++ (inPar 3 $ words (last xs))
               ++ " $ " ++ initParam x
 
 inPar :: Int -> [String] -> String
 inPar i (x:[]) = change i x
 inPar i ls = "("++ (unwords (map chInPar (init ls))) ++" "++ (chInPar (last ls)) ++")"++(lastPar i)
+
+initParam :: String -> String
+initParam _ = "0"
 
 change :: Int -> String -> String
 change i s = case (foldl whatis "NULL" s) of
@@ -43,43 +46,7 @@ chInPar s = case (foldl whatis "NULL" s) of
 lastPar :: Int -> String
 lastPar i = if (i==1 || i==2) then " .> "
                               else ""
-
-
-joinPar :: String -> Bool -> [String] -> [String]
-joinPar _ _ [] = []
-joinPar s False (x:xs)
-  | head x == '(' = joinPar (tail x) True xs
-  | otherwise = x : (joinPar s False xs)
-joinPar s True (x:xs)
-  | last x == ')' = (s++" "++(init x)) : (joinPar "" False xs)
-  | otherwise = joinPar (s++" "++x) True xs
-
-joinStr :: String -> Bool -> [String] -> [String]
-joinStr "" _ [] = []
-joinStr s _ [] = [s]
-joinStr s False (x:xs)
-  | head x == '"' = joinStr x True xs
-  | otherwise = x : (joinStr s False xs)
-joinStr s True (x:xs)
-  | last x == '"' = (s++":"++x) : (joinStr "" False xs)
-  | otherwise = joinStr (s++":"++x) True xs
-
-replace :: String -> String
-replace s = foldr check [] s
-              where check ch acc
-                      | ch=='x' = '*':acc
-                      | ch=='/' && (head acc)=='%' = '/':(tail acc)
-                      | ch=='/' = '%':acc
-                      | ch==':' = ' ':acc
-                      | otherwise = ch:acc
-
-repStr :: String -> String
-repStr s = foldr check [] s
-              where check ch acc
-                      | ch==':' && (head acc)==' ' = ':':acc
-                      | ch==':' = ' ':acc
-                      | otherwise = ch:acc
- 
+                              
 whatis :: String -> Char -> String
 whatis acc ch
   | (ch>='0' && ch<='9') && acc=="NULL" = "NUM"
@@ -97,12 +64,56 @@ whatis acc ch
   | ch=='.' && acc=="NUM" = "PERIOD"
   | otherwise = acc 
 
-initParam :: String -> String
-initParam _ = "0"
+replace :: String -> String
+replace s = foldr check [] s
+              where check ch acc
+                      | ch=='x' = '*':acc
+                      | ch=='/' && (head acc)=='%' = '/':(tail acc)
+                      | ch=='/' = '%':acc
+                      | otherwise = ch:acc
+
+repStr :: String -> String
+repStr s = foldr check [] s
+              where check ch acc
+                      | ch==':' && (head acc)=='\\' = ':':(tail acc)
+                      | ch==':' = ' ':acc
+                      | otherwise = ch:acc
+
+joinPar :: String -> Bool -> [String] -> [String]
+joinPar _ _ [] = []
+joinPar s False (x:xs)
+  | head x == '(' = joinPar (tail x) True xs
+  | otherwise = x : (joinPar s False xs)
+joinPar s True (x:xs)
+  | last x == ')' = (s++" "++(init x)) : (joinPar "" False xs)
+  | otherwise = joinPar (s++" "++x) True xs
+
+joinLst :: String -> Bool -> [String] -> [String]
+joinLst "" _ [] = []
+joinLst s _ [] = [s]
+joinLst s False (x:xs)
+  | head x == '[' = joinLst x True xs
+  | otherwise = x : (joinLst s False xs)
+joinLst s True (x:xs)
+  | last x == ']' = (s++":"++x) : (joinLst "" False xs)
+  | otherwise = joinLst (s++":"++x) True xs
+
+fillStr :: Bool -> String -> String
+fillStr _ "" = ""
+fillStr False (x:xs)
+  | x=='"' = x:(fillStr True xs)
+  | otherwise = x:(fillStr False xs)
+fillStr True (x:xs)
+  | x=='\\' = if (head xs)=='"' then (head xs):(fillStr True (tail xs))
+                               else x:(fillStr True xs)
+  | x==' ' = ':':(fillStr True xs)
+  | x==':' = ":\\"++(fillStr True xs)
+  | x=='"' = x:(fillStr False xs)
+  | otherwise = x:(fillStr True xs)
 
 main :: IO ()
 main = do
   args <- getArgs
   let exp = head args
-  print (conv (joinPar "" False (joinStr "" False (words exp))))
+  print (conv (joinPar "" False (joinLst "" False (words $ fillStr False exp))))
 
