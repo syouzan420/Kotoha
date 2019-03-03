@@ -13,7 +13,9 @@ inPar i (x:[]) = change i x
 inPar i ls = "("++ (unwords (map chInPar (init ls))) ++" "++ (chInPar (last ls)) ++")"++(lastPar i)
 
 initParam :: String -> String
-initParam _ = "0"
+initParam s = case (foldl whatis "NULL" s) of
+                "TUPPLE" -> s
+                _ -> "0"
 
 change :: Int -> String -> String
 change i s = case (foldl whatis "NULL" s) of
@@ -29,8 +31,13 @@ change i s = case (foldl whatis "NULL" s) of
                           1 -> "toList .> (++ "++(repStr s)++" ) .> "
                           2 -> "(++ "++(repStr s)++") .> "
                           3 -> "(++ "++(repStr s)++")"
+             "TUPPLE" -> case i of
+                           0 -> "id"
+                           1 -> ""
+                           2 -> s++" .> "
+                           3 -> s
              "FUNC" -> if (i==1 || i==2) then s++" .> "
-                                         else s++" "
+                                         else s
              _ -> ""
 
 chInPar :: String -> String
@@ -40,7 +47,7 @@ chInPar s = case (foldl whatis "NULL" s) of
              "NUM" -> replace s
              "NFUNC" -> "("++[(head (replace s))]++"("++(tail (replace s))++"))"
              "LIST" -> repStr s
-             "FUNC" -> s++" "
+             "FUNC" -> s
              _ -> ""
 
 lastPar :: Int -> String
@@ -56,6 +63,9 @@ whatis acc ch
   | ch=='+' && acc=="NFUNC" = "FUNC"
   | ch=='[' && acc=="NULL" = "LIST"
   | ch=='"' && acc=="NULL" = "LIST"
+  | ch=='(' && acc=="NULL" = "TUPPLE?"
+  | ch==',' && acc=="TUPPLE?" = "TUPPLE"
+  | ch==')' && acc=="TUPPLE?" = "FUNC"
   | ch=='-' && acc=="NULL" = "NUM"
   | ch=='x' && acc=="NFUNC" = "NFUNC"
   | (ch>='a' && ch<='z') && acc=="NULL" = "FUNC"
@@ -81,7 +91,9 @@ repStr s = foldr check [] s
 
 joinPar :: String -> Bool -> [String] -> [String]
 joinPar "" _ [] = []
+joinPar s _ [] = [s]
 joinPar s False (x:xs)
+  | head x == '(' && last x == ')' = x : (joinPar "" False xs)
   | head x == '(' = joinPar (tail x) True xs
   | otherwise = x : (joinPar s False xs)
 joinPar s True (x:xs)
