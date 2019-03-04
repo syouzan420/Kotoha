@@ -38,7 +38,7 @@ change i s = case (foldl whatis "NULL" s) of
                            3 -> s
              "FUNC" -> if (i==1 || i==2) then s++" .> "
                                          else s
-             _ -> ""
+             _ -> s 
 
 chInPar :: String -> String
 chInPar s = case (foldl whatis "NULL" s) of
@@ -48,7 +48,7 @@ chInPar s = case (foldl whatis "NULL" s) of
              "NFUNC" -> "("++[(head (replace s))]++"("++(tail (replace s))++"))"
              "LIST" -> repStr s
              "FUNC" -> s
-             _ -> ""
+             _ -> s 
 
 lastPar :: Int -> String
 lastPar i = if (i==1 || i==2) then " .> "
@@ -64,6 +64,7 @@ whatis acc ch
   | ch=='[' && acc=="NULL" = "LIST"
   | ch=='"' && acc=="NULL" = "LIST"
   | ch=='(' && acc=="NULL" = "TUPPLE?"
+  | ch==')' && acc=="NULL" = "FUNC"
   | ch==',' && acc=="TUPPLE?" = "TUPPLE"
   | ch==')' && acc=="TUPPLE?" = "FUNC"
   | ch=='-' && acc=="NULL" = "NUM"
@@ -89,16 +90,18 @@ repStr s = foldr check [] s
                       | ch==':' = ' ':acc
                       | otherwise = ch:acc
 
-joinPar :: String -> Bool -> [String] -> [String]
-joinPar "" _ [] = []
-joinPar s _ [] = [s]
-joinPar s False (x:xs)
-  | head x == '(' && last x == ')' = x : (joinPar "" False xs)
-  | head x == '(' = joinPar (tail x) True xs
-  | otherwise = x : (joinPar s False xs)
-joinPar s True (x:xs)
-  | last x == ')' = (s++" "++(init x)) : (joinPar "" False xs)
-  | otherwise = joinPar (s++" "++x) True xs
+joinPar :: String -> Bool -> Int -> [String] -> [String]
+joinPar "" _ _ [] = []
+joinPar s _ _ [] = [s]
+joinPar s False i (x:xs)
+  | head x == '(' && last x == ')' = x : (joinPar "" False i xs)
+  | head x == '(' = joinPar (tail x) True (i+1) xs
+  | otherwise = x : (joinPar "" False i xs)
+joinPar s True i (x:xs)
+  | head x == '(' && last x == ')' = joinPar (s++" "++x) True i xs
+  | head x == '(' = joinPar (s++" "++x) True (i+1) xs
+  | last x == ')' = if i==1 then (s++" "++(init x)):(joinPar "" False 0 xs) else joinPar (s++" "++x) True (i-1) xs
+  | otherwise = joinPar (s++" "++x) True i xs
 
 joinLst :: String -> Bool -> [String] -> [String]
 joinLst "" _ [] = []
@@ -128,5 +131,5 @@ main :: IO ()
 main = do
   args <- getArgs
   let exp = head args
-  print (conv (joinPar "" False (joinLst "" False (words $ fillStr False exp))))
+  print (conv (joinPar "" False 0 (joinLst "" False (words $ fillStr False exp))))
 
