@@ -69,6 +69,7 @@ whatis acc ch
   | ch==')' && acc=="TUPPLE?" = "FUNC"
   | ch=='-' && acc=="NULL" = "NUM"
   | ch=='x' && acc=="NFUNC" = "NFUNC"
+  | ch=='$' && acc=="NULL" = "FUNC"
   | (ch>='a' && ch<='z') && acc=="NULL" = "FUNC"
   | (ch>='a' && ch<='Z') && acc=="NFUNC" = "FUNC"
   | (ch=='+' || ch=='*' || ch=='x' || ch=='/') && acc=="NUM" = "NUM"
@@ -90,6 +91,9 @@ repStr s = foldr check [] s
                       | ch==':' = ' ':acc
                       | otherwise = ch:acc
 
+numPar :: String -> Int
+numPar = foldl (\acc x -> if x==')' then acc+1 else acc) 0
+
 joinPar :: String -> Bool -> Int -> [String] -> [String]
 joinPar "" _ _ [] = []
 joinPar s _ _ [] = [s]
@@ -98,9 +102,13 @@ joinPar s False i (x:xs)
   | head x == '(' = joinPar (tail x) True (i+1) xs
   | otherwise = x : (joinPar "" False i xs)
 joinPar s True i (x:xs)
-  | head x == '(' && last x == ')' = joinPar (s++" "++x) True i xs
+  | head x == '(' && last x == ')' 
+        = if (i-(numPar x)+1)==0 then (s++" "++(init x)):(joinPar "" False 0 xs) 
+                                 else joinPar (s++" "++x) True (i-(numPar x)+1) xs
   | head x == '(' = joinPar (s++" "++x) True (i+1) xs
-  | last x == ')' = if i==1 then (s++" "++(init x)):(joinPar "" False 0 xs) else joinPar (s++" "++x) True (i-1) xs
+  | last x == ')' 
+        = if (i-(numPar x))==0 then (s++" "++(init x)):(joinPar "" False 0 xs) 
+                               else joinPar (s++" "++x) True (i-(numPar x)) xs
   | otherwise = joinPar (s++" "++x) True i xs
 
 joinLst :: String -> Bool -> [String] -> [String]
