@@ -1,11 +1,12 @@
 import System.Environment (getArgs)
+import System.IO (IOMode(..), openFile, hClose, hSetEncoding, utf8, hPutStr)
 
 conv :: [String] -> String
 conv (x:[]) = (inPar 0 $ words x) ++ " $ " ++ initParam x
-conv (x:y:[]) = (inPar 1 $ words x) ++ (inPar 3 $ words y) ++ " $ " ++ initParam x
+conv (x:y:[]) = (inPar 1 $ words x) ++" "++ (inPar 3 $ words y) ++ " $ " ++ initParam x
 conv (x:xs) = (inPar 1 $ words x)
-              ++ (unwords $ map (inPar 2) $ init (map words xs))
-              ++ (inPar 3 $ words (last xs))
+              ++" "++ (unwords $ map (inPar 2) $ init (map words xs))
+              ++" "++ (inPar 3 $ words (last xs))
               ++ " $ " ++ initParam x
 
 inPar :: Int -> [String] -> String
@@ -20,23 +21,23 @@ initParam s = case (foldl whatis "NULL" s) of
 change :: Int -> String -> String
 change i s = case (foldl whatis "NULL" s) of
              "NULL" -> ""
-             "PERIOD" -> if (i==1 || i==2) then (init s)++" .> "
+             "PERIOD" -> if (i==1 || i==2) then (init s)++" .>"
                                            else init s
-             "NUM" -> if (i==1 || i==2) then "(+("++(replace s)++")) .> "
+             "NUM" -> if (i==1 || i==2) then "(+("++(replace s)++")) .>"
                                         else "(+("++(replace s)++"))"
-             "NFUNC" -> if (i==1 || i==2) then "("++[(head (replace s))]++"("++(tail (replace s))++")) .> "
+             "NFUNC" -> if (i==1 || i==2) then "("++[(head (replace s))]++"("++(tail (replace s))++")) .>"
                                           else "("++[(head (replace s))]++"("++(tail (replace s))++"))"
              "LIST" -> case i of
                           0 -> "toList .> (++ "++(repStr s)++" )"
-                          1 -> "toList .> (++ "++(repStr s)++" ) .> "
+                          1 -> "toList .> (++ "++(repStr s)++" ) .>"
                           2 -> "(++ "++(repStr s)++") .> "
                           3 -> "(++ "++(repStr s)++")"
              "TUPPLE" -> case i of
                            0 -> "id"
                            1 -> ""
-                           2 -> s++" .> "
+                           2 -> s++" .>"
                            3 -> s
-             "FUNC" -> if (i==1 || i==2) then s++" .> "
+             "FUNC" -> if (i==1 || i==2) then s++" .>"
                                          else s
              _ -> s 
 
@@ -51,7 +52,7 @@ chInPar s = case (foldl whatis "NULL" s) of
              _ -> s 
 
 lastPar :: Int -> String
-lastPar i = if (i==1 || i==2) then " .> "
+lastPar i = if (i==1 || i==2) then " .>"
                               else ""
                               
 whatis :: String -> Char -> String
@@ -69,7 +70,7 @@ whatis acc ch
   | ch==')' && acc=="TUPPLE?" = "FUNC"
   | ch=='-' && acc=="NULL" = "NUM"
   | ch=='x' && acc=="NFUNC" = "NFUNC"
-  | ch=='$' && acc=="NULL" = "FUNC"
+  | ch=='$' || ch=='\\' || ch=='>' && acc=="NULL" = "FUNC"
   | (ch>='a' && ch<='z') && acc=="NULL" = "FUNC"
   | (ch>='a' && ch<='Z') && acc=="NFUNC" = "FUNC"
   | (ch=='+' || ch=='*' || ch=='x' || ch=='/') && acc=="NUM" = "NUM"
@@ -135,9 +136,37 @@ fillStr True (x:xs)
   | x=='\"' = x:(fillStr False xs)
   | otherwise = x:(fillStr True xs)
 
+checkLet :: String -> String -> (String, String)
+checkLet s [] = ([],s)
+checkLet s (x:[]) = checkLet (s++[x]) []
+checkLet s (x:y:[]) = checkLet (s++[x]) [y]
+checkLet s (x:y:xs) 
+  = if (x==' ' && y=='=' && (head xs)==' ') then (s, (convAll (tail xs)))
+                                            else (checkLet (s++[x]) (y:xs))
+
+removeDollar :: String -> String
+removeDollar [] = []
+removeDollar s = if (last s)=='$' then (init s)
+                                  else (removeDollar (init s))
+
+convAll :: String -> String
+convAll exp = conv (joinPar "" False 0 (joinLst "" False (words $ fillStr False exp)))
+
+writeToFile :: String -> String -> IO ()
+writeToFile fn s = do
+  hout <- openFile fn AppendMode 
+  hSetEncoding hout utf8
+  let result = s++"\n\n"
+  hPutStr hout result 
+  hClose hout
+
 main :: IO ()
 main = do
   args <- getArgs
   let exp = head args
-  print (conv (joinPar "" False 0 (joinLst "" False (words $ fillStr False exp))))
+  let cl = checkLet "" exp
+  if (fst cl)=="" then print (convAll exp) 
+                  else do
+                      writeToFile "User.hs" ((fst cl)++" = "++(removeDollar (snd cl)))
+                      print (snd cl)
 

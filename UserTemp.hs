@@ -1,2 +1,3 @@
 import Data.Ratio
-:load User.hs
+import Func
+

@@ -2,8 +2,9 @@
 
 set -o histexpand
 set -o vi
+cat UserTemp.hs > User.hs
 history -r "history.txt"
-echo "*** Kotoha Inline Coder *** 2019/3/1 yokoP"
+echo "*** Kotoha Inline Coder *** 2019/3/5 yokoP"
 
 while :
   do

@@ -1,8 +1,20 @@
-module Func ((.>)) where
+module Func
+((.>),
+toList,
+cons,
+index,
+add,
+times) where
+
+import Control.Monad(liftM)
+
+--infixr 5 .>
+--(.>) :: Functor f => f a -> (a -> b) -> f b
+--(.>) = flip fmap 
 
 infixr 5 .>
-(.>) :: Functor f => f a -> (a -> b) -> f b
-(.>) = flip fmap
+(.>) :: Monad m => m a -> (a -> b) -> m b
+(.>) = flip liftM 
 
 toList :: a -> [b]
 toList _ = []
