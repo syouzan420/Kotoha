@@ -60,7 +60,7 @@ whatis acc ch
   | (ch>='0' && ch<='9') && acc=="NULL" = "NUM"
   | (ch>='0' && ch<='9') && acc=="NUM" = "NUM"
   | (ch>='0' && ch<='9') && acc=="PERIOD" = "NUM"
-  | (ch=='+' || ch=='*' || ch=='x') && acc=="NULL" = "NFUNC"
+  | (ch=='+' || ch=='*' || ch=='x' || ch=='/') && acc=="NULL" = "NFUNC"
   | ch=='+' && acc=="NFUNC" = "FUNC"
   | ch=='[' && acc=="NULL" = "LIST"
   | ch=='"' && acc=="NULL" = "LIST"
