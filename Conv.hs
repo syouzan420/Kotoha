@@ -150,7 +150,11 @@ removeDollar s = if (last s)=='$' then (init s)
                                   else (removeDollar (init s))
 
 convAll :: String -> String
-convAll exp = conv (joinPar "" False 0 (joinLst "" False (words $ fillStr False exp)))
+convAll [] = []
+convAll exp =
+  if (head exp)==':' then exp 
+                     else conv (joinPar "" False 0 (joinLst "" False (words $ fillStr False exp)))
+
 
 writeToFile :: String -> String -> IO ()
 writeToFile fn s = do

@@ -8,8 +8,8 @@ echo "*** Kotoha Inline Coder *** 2019/3/5 yokoP"
 
 while :
   do
-    read -e -p "> " line 
-    if [ "${line}" = "exit" -o "${line}" = "q" ]; then
+    read -e -r -p "> " line 
+    if [ "${line}" = "exit" -o "${line}" = ":q" ]; then
       break
     fi
     ./Conv "${line}" | cat | while read tx; do\
